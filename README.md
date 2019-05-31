@@ -2,5 +2,8 @@
 
 A small tool that can convert ceb (Conversations Encrypted Backup) files to simple plain text.
 
+## Compile
+`mvn package`
+
 ## Usage
 `java -jar target/im.conversations.ceb2txt-0.1.jar /path/to/file.ceb`
