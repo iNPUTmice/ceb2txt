@@ -43,8 +43,6 @@ public class Main {
 
     public static void main(String... args) throws Exception {
 
-        Security.addProvider(Conscrypt.newProvider());
-
         if (args.length != 1) {
             System.err.println("Usage java -jar im.conversations.ceb2txt-0.1.jar [filename]");
             System.exit(1);
@@ -68,7 +66,7 @@ public class Main {
 
         final String password = new String(console.readPassword("Enter password for "+backupFileHeader.getJid().asBareJid()+": "));
 
-        final Cipher cipher = Cipher.getInstance(CIPHERMODE);
+        final Cipher cipher = Cipher.getInstance(CIPHERMODE, Conscrypt.newProvider());
         byte[] key = getKey(password, backupFileHeader.getSalt());
 
         final BufferedReader reader;
