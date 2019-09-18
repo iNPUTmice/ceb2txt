@@ -16,6 +16,7 @@ import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Security;
 import java.security.spec.InvalidKeySpecException;
@@ -81,6 +82,10 @@ public class Main {
 
             GZIPInputStream gzipInputStream = new GZIPInputStream(cipherInputStream);
             reader = new BufferedReader(new InputStreamReader(gzipInputStream, StandardCharsets.UTF_8));
+        } catch (InvalidAlgorithmParameterException e) {
+            System.err.println("Correct backup file");
+            System.exit(1);
+            return;
         } catch (IOException e) {
             System.err.println("Wrong password or corrupt backup file");
             System.exit(1);
@@ -92,7 +97,6 @@ public class Main {
         Sql2o database = new Sql2o("sqlite:", null, null);
 
         Connection connection = database.open();
-
         connection.createQuery(CREATE_ACCOUNTS_TABLE).executeUpdate();
         connection.createQuery(CREATE_CONVERSATIONS_TABLE).executeUpdate();
         connection.createQuery(CREATE_MESSAGES_TABLE).executeUpdate();
