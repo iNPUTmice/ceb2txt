@@ -18,7 +18,6 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.NoSuchAlgorithmException;
-import java.security.Security;
 import java.security.spec.InvalidKeySpecException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -137,7 +136,7 @@ public class Main {
                     if (writer != null) {
                         writer.close();
                     }
-                    File conversationFile = new File(account.getJid().asBareJid().toEscapedString() + "/" + (group ? "group" : "1:1") + "/" + conversation.getContact().asBareJid().toEscapedString() + "/" + currentDate + ".txt");
+                    File conversationFile = new File(account.getJid().asBareJid().toEscapedString() + "/" + (group ? "group" : "1on1") + "/" + conversation.getContact().asBareJid().toEscapedString() + "/" + currentDate + ".txt");
                     conversationFile.getParentFile().mkdirs();
                     writer = new PrintWriter(conversationFile);
                 }
