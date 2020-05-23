@@ -143,6 +143,8 @@ public class Main {
                 }
             }
         }
+        
+        reader.close();
 
         Account account = connection.createQuery("select uuid,username,server,resource from accounts limit 1").executeAndFetchFirst(Account.class);
 
