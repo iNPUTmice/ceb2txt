@@ -14,6 +14,9 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
+import javax.swing.JOptionPane;
+import javax.swing.JPasswordField;
+
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidAlgorithmParameterException;
@@ -64,7 +67,27 @@ public class Main {
         }
         Console console = System.console();
 
-        final String password = new String(console.readPassword("Enter password for "+backupFileHeader.getJid().asBareJid()+": "));
+        final String password;
+        final String pwdPrompt = "Enter password for "+backupFileHeader.getJid().asBareJid()+": ";
+
+        // Some IDEs don't allow to use console
+        if (console != null) {
+            password = new String(console.readPassword(pwdPrompt));
+        }
+        else {
+            final JPasswordField pwdField = new JPasswordField();
+            final int response = JOptionPane.showConfirmDialog(
+                    null,
+                    pwdField,
+                    pwdPrompt,
+                    JOptionPane.OK_CANCEL_OPTION,
+                    JOptionPane.QUESTION_MESSAGE);
+
+            if (JOptionPane.OK_OPTION != response) {
+                System.exit(0);
+            }
+            password = new String(pwdField.getPassword());
+        }
 
         final Cipher cipher = Cipher.getInstance(CIPHERMODE, Conscrypt.newProvider());
         byte[] key = getKey(password, backupFileHeader.getSalt());
