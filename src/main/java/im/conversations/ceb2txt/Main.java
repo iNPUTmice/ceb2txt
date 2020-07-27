@@ -40,7 +40,7 @@ public class Main {
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
     private static final SimpleDateFormat TIME_FORMAT = new SimpleDateFormat("HH:mm");
 
-    public static void main(String... args) throws Exception {
+    public static void main(final String... args) throws Exception {
 
         if (args.length != 1) {
             System.err.println("Usage java -jar im.conversations.ceb2txt-0.1.jar [filename]");
@@ -52,18 +52,18 @@ public class Main {
 
         final FileInputStream fileInputStream = new FileInputStream(file);
         final DataInputStream dataInputStream = new DataInputStream(fileInputStream);
-        BackupFileHeader backupFileHeader;
+        final BackupFileHeader backupFileHeader;
 
         try {
             backupFileHeader = BackupFileHeader.read(dataInputStream);
         } catch (Exception e) {
-            System.err.println(file.getAbsolutePath()+" does not seem to be a valid backup file");
+            System.err.println(file.getAbsolutePath() + " does not seem to be a valid backup file");
             System.exit(1);
             return;
         }
         Console console = System.console();
 
-        final String password = new String(console.readPassword("Enter password for "+backupFileHeader.getJid().asBareJid()+": "));
+        final String password = new String(console.readPassword("Enter password for " + backupFileHeader.getJid().asBareJid() + ": "));
 
         final Cipher cipher = Cipher.getInstance(CIPHERMODE, Conscrypt.newProvider());
         byte[] key = getKey(password, backupFileHeader.getSalt());
@@ -71,13 +71,12 @@ public class Main {
         final BufferedReader reader;
 
         try {
-
-            SecretKeySpec keySpec = new SecretKeySpec(key, KEYTYPE);
-            IvParameterSpec ivSpec = new IvParameterSpec(backupFileHeader.getIv());
+            final SecretKeySpec keySpec = new SecretKeySpec(key, KEYTYPE);
+            final IvParameterSpec ivSpec = new IvParameterSpec(backupFileHeader.getIv());
             cipher.init(Cipher.DECRYPT_MODE, keySpec, ivSpec);
-            CipherInputStream cipherInputStream = new CipherInputStream(fileInputStream, cipher);
+            final CipherInputStream cipherInputStream = new CipherInputStream(fileInputStream, cipher);
 
-            GZIPInputStream gzipInputStream = new GZIPInputStream(cipherInputStream);
+            final GZIPInputStream gzipInputStream = new GZIPInputStream(cipherInputStream);
             reader = new BufferedReader(new InputStreamReader(gzipInputStream, StandardCharsets.UTF_8));
         } catch (InvalidAlgorithmParameterException e) {
             System.err.println("Correct backup file");
@@ -91,9 +90,9 @@ public class Main {
         String line;
         StringBuilder multiLineQuery = null;
 
-        Sql2o database = new Sql2o("sqlite:", null, null);
+        final Sql2o database = new Sql2o("sqlite:", null, null);
 
-        Connection connection = database.open();
+        final Connection connection = database.open();
         connection.createQuery(CREATE_ACCOUNTS_TABLE).executeUpdate();
         connection.createQuery(CREATE_CONVERSATIONS_TABLE).executeUpdate();
         connection.createQuery(CREATE_MESSAGES_TABLE).executeUpdate();
@@ -120,13 +119,22 @@ public class Main {
             }
         }
 
-        Account account = connection.createQuery("select uuid,username,server,resource from accounts limit 1").executeAndFetchFirst(Account.class);
+        final Account account = connection.createQuery("select uuid,username,server,resource from accounts limit 1")
+                .executeAndFetchFirst(Account.class);
 
-        List<Conversation> conversationList = connection.createQuery("select uuid,mode,contactJid from conversations where accountUuid=:uuid").addParameter("uuid", account.getUuid()).executeAndFetch(Conversation.class);
+        final List<Conversation> conversationList = connection.createQuery(
+                "select uuid,mode,contactJid from conversations where accountUuid=:uuid"
+        )
+                .addParameter("uuid", account.getUuid())
+                .executeAndFetch(Conversation.class);
 
-        for (Conversation conversation : conversationList) {
+        for (final Conversation conversation : conversationList) {
             final boolean group = conversation.isGroupChat();
-            List<Message> messageList = connection.createQuery("select body,status,timeSent,counterpart from messages where conversationUuid=:conversation").addParameter("conversation", conversation.getUuid()).executeAndFetch(Message.class);
+            final List<Message> messageList = connection.createQuery(
+                    "select body,status,timeSent,counterpart from messages where conversationUuid=:conversation"
+            )
+                    .addParameter("conversation", conversation.getUuid())
+                    .executeAndFetch(Message.class);
             PrintWriter writer = null;
             String currentDate = null;
             for (Message message : messageList) {
@@ -140,7 +148,7 @@ public class Main {
                     conversationFile.getParentFile().mkdirs();
                     writer = new PrintWriter(conversationFile);
                 }
-                String nick = group ? Strings.nullToEmpty(message.getCounterpart().getResource()) : "";
+                final String nick = group ? Strings.nullToEmpty(message.getCounterpart().getResource()) : "";
                 writer.println(TIME_FORMAT.format(date) + " " + nick + (nick.length() > 0 ? " " : "") + (message.isReceived() ? "<-" : "->") + " " + message.getBody().replaceAll("\n", "\n" + Strings.repeat(" ", 9 + nick.length() + (nick.length() > 0 ? 1 : 0))));
             }
             if (writer != null) {
@@ -148,11 +156,11 @@ public class Main {
             }
         }
 
-        System.out.println(conversationList.size()+" conversations have been written to "+account.getJid().asBareJid().toEscapedString()+"/*/*.txt");
+        System.out.println(conversationList.size() + " conversations have been written to " + account.getJid().asBareJid().toEscapedString() + "/*/*.txt");
 
     }
 
-    public static byte[] getKey(String password, byte[] salt) {
+    public static byte[] getKey(final String password, final byte[] salt) {
         try {
             SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
             return factory.generateSecret(new PBEKeySpec(password.toCharArray(), salt, 1024, 128)).getEncoded();
@@ -161,7 +169,7 @@ public class Main {
         }
     }
 
-    private static int count(String input, char c) {
+    private static int count(final String input, char c) {
         int count = 0;
         for (char aChar : input.toCharArray()) {
             if (aChar == c) {
