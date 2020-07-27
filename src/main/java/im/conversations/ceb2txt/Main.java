@@ -61,7 +61,7 @@ public class Main {
             System.exit(1);
             return;
         }
-        Console console = System.console();
+        final Console console = System.console();
 
         final String password = new String(console.readPassword("Enter password for " + backupFileHeader.getJid().asBareJid() + ": "));
 
@@ -131,13 +131,13 @@ public class Main {
         for (final Conversation conversation : conversationList) {
             final boolean group = conversation.isGroupChat();
             final List<Message> messageList = connection.createQuery(
-                    "select body,status,timeSent,counterpart from messages where conversationUuid=:conversation"
+                    "select body,status,timeSent,counterpart,type from messages where conversationUuid=:conversation"
             )
                     .addParameter("conversation", conversation.getUuid())
                     .executeAndFetch(Message.class);
             PrintWriter writer = null;
             String currentDate = null;
-            for (Message message : messageList) {
+            for (final Message message : messageList) {
                 Date date = new Date(message.getTimeSent());
                 if (currentDate == null || !currentDate.equals(DATE_FORMAT.format(date))) {
                     currentDate = DATE_FORMAT.format(date);
