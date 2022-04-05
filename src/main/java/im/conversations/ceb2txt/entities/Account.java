@@ -9,9 +9,8 @@ public class Account {
     private String resource;
     private String uuid;
 
-
     public Jid getJid() {
-        return Jid.of(username,server,resource);
+        return Jid.of(username, server, resource);
     }
 
     public String getUuid() {

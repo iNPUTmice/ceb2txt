@@ -1,14 +1,11 @@
 package im.conversations.ceb2txt.entities;
 
-
 import com.google.common.base.Strings;
-
 
 public class RtpSessionStatus {
 
     public final boolean successful;
     public final long duration;
-
 
     public RtpSessionStatus(boolean successful, long duration) {
         this.successful = successful;
@@ -22,7 +19,7 @@ public class RtpSessionStatus {
             try {
                 duration = Long.parseLong(parts[1]);
             } catch (NumberFormatException e) {
-                //do nothing
+                // do nothing
             }
         }
         boolean made;

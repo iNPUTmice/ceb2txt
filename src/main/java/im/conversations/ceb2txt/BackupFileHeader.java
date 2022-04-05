@@ -1,10 +1,9 @@
 package im.conversations.ceb2txt;
 
-import rocks.xmpp.addr.Jid;
-
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import rocks.xmpp.addr.Jid;
 
 public class BackupFileHeader {
 
@@ -16,16 +15,21 @@ public class BackupFileHeader {
     private byte[] iv;
     private byte[] salt;
 
-
     @Override
     public String toString() {
-        return "BackupFileHeader{" +
-                "app='" + app + '\'' +
-                ", jid=" + jid +
-                ", timestamp=" + timestamp +
-                ", iv=" + bytesToHex(iv) +
-                ", salt=" + bytesToHex(salt) +
-                '}';
+        return "BackupFileHeader{"
+                + "app='"
+                + app
+                + '\''
+                + ", jid="
+                + jid
+                + ", timestamp="
+                + timestamp
+                + ", iv="
+                + bytesToHex(iv)
+                + ", salt="
+                + bytesToHex(salt)
+                + '}';
     }
 
     public BackupFileHeader(String app, Jid jid, long timestamp, byte[] iv, byte[] salt) {
@@ -48,7 +52,11 @@ public class BackupFileHeader {
     public static BackupFileHeader read(DataInputStream inputStream) throws IOException {
         final int version = inputStream.readInt();
         if (version > VERSION) {
-            throw new IllegalArgumentException("Backup File version was "+version+" but app only supports up to version "+VERSION);
+            throw new IllegalArgumentException(
+                    "Backup File version was "
+                            + version
+                            + " but app only supports up to version "
+                            + VERSION);
         }
         String app = inputStream.readUTF();
         String jid = inputStream.readUTF();
@@ -58,8 +66,7 @@ public class BackupFileHeader {
         byte[] salt = new byte[16];
         inputStream.readFully(salt);
 
-        return new BackupFileHeader(app,Jid.of(jid),timestamp,iv,salt);
-
+        return new BackupFileHeader(app, Jid.of(jid), timestamp, iv, salt);
     }
 
     public byte[] getSalt() {
@@ -82,7 +89,7 @@ public class BackupFileHeader {
         return timestamp;
     }
 
-    private final static char[] hexArray = "0123456789abcdef".toCharArray();
+    private static final char[] hexArray = "0123456789abcdef".toCharArray();
 
     private static String bytesToHex(byte[] bytes) {
         char[] hexChars = new char[bytes.length * 2];
@@ -93,5 +100,4 @@ public class BackupFileHeader {
         }
         return new String(hexChars);
     }
-
 }

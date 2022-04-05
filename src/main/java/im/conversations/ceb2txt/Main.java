@@ -4,16 +4,6 @@ import com.google.common.base.Strings;
 import im.conversations.ceb2txt.entities.Account;
 import im.conversations.ceb2txt.entities.Conversation;
 import im.conversations.ceb2txt.entities.Message;
-import org.conscrypt.Conscrypt;
-import org.sql2o.Connection;
-import org.sql2o.Sql2o;
-
-import javax.crypto.Cipher;
-import javax.crypto.CipherInputStream;
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.PBEKeySpec;
-import javax.crypto.spec.SecretKeySpec;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidAlgorithmParameterException;
@@ -23,19 +13,46 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.zip.GZIPInputStream;
+import javax.crypto.Cipher;
+import javax.crypto.CipherInputStream;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.SecretKeySpec;
+import org.conscrypt.Conscrypt;
+import org.sql2o.Connection;
+import org.sql2o.Sql2o;
 
 public class Main {
 
     public static final String KEYTYPE = "AES";
     public static final String CIPHERMODE = "AES/GCM/NoPadding";
 
-    private static final String CREATE_ACCOUNTS_TABLE = "create table accounts (uuid text primary key, username text, server text, password text, display_name text, status number, status_message text, rosterversion text, options number, avatar text, keys text, hostname text, port number, resource text)";
-    private static final String CREATE_CONVERSATIONS_TABLE = "create table conversations (uuid text, accountUuid text, name text, contactUuid text, contactJid text, created number, status number, mode number, attributes text)";
-    private static final String CREATE_MESSAGES_TABLE = "create table messages (uuid text, conversationUuid text, timeSent number, counterpart text, trueCounterpart text, body text, encryption number, status number, type number, relativeFilePath text, serverMsgId text, axolotl_fingerprint text, carbon number, edited number, read number, oob number, errorMsg text, readByMarkers text, markable number, remoteMsgId text, deleted number, bodyLanguage text)";
-    private static final String CREATE_PREKEYS_TABLE = "create table prekeys (account text, id text, key text)";
-    private static final String CREATE_SIGNED_PREKEYS_TABLE = "create table signed_prekeys (account text, id text, key text)";
-    private static final String CREATE_SESSIONS_TABLE = "create table sessions (account text, name text, device_id text, key text)";
-    private static final String CREATE_IDENTITIES_TABLE = "create table identities (account text, name text, ownkey text, fingerprint text, certificate text, trust number, active number, last_activation number, key text)";
+    private static final String CREATE_ACCOUNTS_TABLE =
+            "create table accounts (uuid text primary key, username text, server text, password"
+                    + " text, display_name text, status number, status_message text, rosterversion"
+                    + " text, options number, avatar text, keys text, hostname text, port number,"
+                    + " resource text)";
+    private static final String CREATE_CONVERSATIONS_TABLE =
+            "create table conversations (uuid text, accountUuid text, name text, contactUuid text,"
+                + " contactJid text, created number, status number, mode number, attributes text)";
+    private static final String CREATE_MESSAGES_TABLE =
+            "create table messages (uuid text, conversationUuid text, timeSent number, counterpart"
+                + " text, trueCounterpart text, body text, encryption number, status number, type"
+                + " number, relativeFilePath text, serverMsgId text, axolotl_fingerprint text,"
+                + " carbon number, edited number, read number, oob number, errorMsg text,"
+                + " readByMarkers text, markable number, remoteMsgId text, deleted number,"
+                + " bodyLanguage text)";
+    private static final String CREATE_PREKEYS_TABLE =
+            "create table prekeys (account text, id text, key text)";
+    private static final String CREATE_SIGNED_PREKEYS_TABLE =
+            "create table signed_prekeys (account text, id text, key text)";
+    private static final String CREATE_SESSIONS_TABLE =
+            "create table sessions (account text, name text, device_id text, key text)";
+    private static final String CREATE_IDENTITIES_TABLE =
+            "create table identities (account text, name text, ownkey text, fingerprint text,"
+                    + " certificate text, trust number, active number, last_activation number, key"
+                    + " text)";
 
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
     private static final SimpleDateFormat TIME_FORMAT = new SimpleDateFormat("HH:mm");
@@ -63,7 +80,12 @@ public class Main {
         }
         final Console console = System.console();
 
-        final String password = new String(console.readPassword("Enter password for " + backupFileHeader.getJid().asBareJid() + ": "));
+        final String password =
+                new String(
+                        console.readPassword(
+                                "Enter password for "
+                                        + backupFileHeader.getJid().asBareJid()
+                                        + ": "));
 
         final Cipher cipher = Cipher.getInstance(CIPHERMODE, Conscrypt.newProvider());
         byte[] key = getKey(password, backupFileHeader.getSalt());
@@ -74,10 +96,13 @@ public class Main {
             final SecretKeySpec keySpec = new SecretKeySpec(key, KEYTYPE);
             final IvParameterSpec ivSpec = new IvParameterSpec(backupFileHeader.getIv());
             cipher.init(Cipher.DECRYPT_MODE, keySpec, ivSpec);
-            final CipherInputStream cipherInputStream = new CipherInputStream(fileInputStream, cipher);
+            final CipherInputStream cipherInputStream =
+                    new CipherInputStream(fileInputStream, cipher);
 
             final GZIPInputStream gzipInputStream = new GZIPInputStream(cipherInputStream);
-            reader = new BufferedReader(new InputStreamReader(gzipInputStream, StandardCharsets.UTF_8));
+            reader =
+                    new BufferedReader(
+                            new InputStreamReader(gzipInputStream, StandardCharsets.UTF_8));
         } catch (InvalidAlgorithmParameterException e) {
             System.err.println("Correct backup file");
             System.exit(1);
@@ -119,22 +144,28 @@ public class Main {
             }
         }
 
-        final Account account = connection.createQuery("select uuid,username,server,resource from accounts limit 1")
-                .executeAndFetchFirst(Account.class);
+        final Account account =
+                connection
+                        .createQuery("select uuid,username,server,resource from accounts limit 1")
+                        .executeAndFetchFirst(Account.class);
 
-        final List<Conversation> conversationList = connection.createQuery(
-                "select uuid,mode,contactJid from conversations where accountUuid=:uuid"
-        )
-                .addParameter("uuid", account.getUuid())
-                .executeAndFetch(Conversation.class);
+        final List<Conversation> conversationList =
+                connection
+                        .createQuery(
+                                "select uuid,mode,contactJid from conversations where"
+                                        + " accountUuid=:uuid")
+                        .addParameter("uuid", account.getUuid())
+                        .executeAndFetch(Conversation.class);
 
         for (final Conversation conversation : conversationList) {
             final boolean group = conversation.isGroupChat();
-            final List<Message> messageList = connection.createQuery(
-                    "select body,status,timeSent,counterpart,type from messages where conversationUuid=:conversation"
-            )
-                    .addParameter("conversation", conversation.getUuid())
-                    .executeAndFetch(Message.class);
+            final List<Message> messageList =
+                    connection
+                            .createQuery(
+                                    "select body,status,timeSent,counterpart,type from messages"
+                                            + " where conversationUuid=:conversation")
+                            .addParameter("conversation", conversation.getUuid())
+                            .executeAndFetch(Message.class);
             PrintWriter writer = null;
             String currentDate = null;
             for (final Message message : messageList) {
@@ -144,26 +175,60 @@ public class Main {
                     if (writer != null) {
                         writer.close();
                     }
-                    File conversationFile = new File(account.getJid().asBareJid().toEscapedString() + "/" + (group ? "group" : "1on1") + "/" + conversation.getContact().asBareJid().toEscapedString() + "/" + currentDate + ".txt");
+                    File conversationFile =
+                            new File(
+                                    account.getJid().asBareJid().toEscapedString()
+                                            + "/"
+                                            + (group ? "group" : "1on1")
+                                            + "/"
+                                            + conversation
+                                                    .getContact()
+                                                    .asBareJid()
+                                                    .toEscapedString()
+                                            + "/"
+                                            + currentDate
+                                            + ".txt");
                     conversationFile.getParentFile().mkdirs();
                     writer = new PrintWriter(conversationFile);
                 }
-                final String nick = group ? Strings.nullToEmpty(message.getCounterpart().getResource()) : "";
-                writer.println(TIME_FORMAT.format(date) + " " + nick + (nick.length() > 0 ? " " : "") + (message.isReceived() ? "<-" : "->") + " " + message.getBody().replaceAll("\n", "\n" + Strings.repeat(" ", 9 + nick.length() + (nick.length() > 0 ? 1 : 0))));
+                final String nick =
+                        group ? Strings.nullToEmpty(message.getCounterpart().getResource()) : "";
+                writer.println(
+                        TIME_FORMAT.format(date)
+                                + " "
+                                + nick
+                                + (nick.length() > 0 ? " " : "")
+                                + (message.isReceived() ? "<-" : "->")
+                                + " "
+                                + message.getBody()
+                                        .replaceAll(
+                                                "\n",
+                                                "\n"
+                                                        + Strings.repeat(
+                                                                " ",
+                                                                9
+                                                                        + nick.length()
+                                                                        + (nick.length() > 0
+                                                                                ? 1
+                                                                                : 0))));
             }
             if (writer != null) {
                 writer.close();
             }
         }
 
-        System.out.println(conversationList.size() + " conversations have been written to " + account.getJid().asBareJid().toEscapedString() + "/*/*.txt");
-
+        System.out.println(
+                conversationList.size()
+                        + " conversations have been written to "
+                        + account.getJid().asBareJid().toEscapedString()
+                        + "/*/*.txt");
     }
 
     public static byte[] getKey(final String password, final byte[] salt) {
         try {
             SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
-            return factory.generateSecret(new PBEKeySpec(password.toCharArray(), salt, 1024, 128)).getEncoded();
+            return factory.generateSecret(new PBEKeySpec(password.toCharArray(), salt, 1024, 128))
+                    .getEncoded();
         } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
             throw new AssertionError(e);
         }
@@ -178,5 +243,4 @@ public class Main {
         }
         return count;
     }
-
 }

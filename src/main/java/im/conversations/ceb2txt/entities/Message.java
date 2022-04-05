@@ -5,7 +5,7 @@ import rocks.xmpp.addr.Jid;
 
 public class Message {
 
-    //constants copy pasted from Conversations
+    // constants copy pasted from Conversations
     public static final int TYPE_TEXT = 0;
     public static final int TYPE_IMAGE = 1;
     public static final int TYPE_FILE = 2;
@@ -14,7 +14,7 @@ public class Message {
     public static final int TYPE_PRIVATE_FILE = 5;
     public static final int TYPE_RTP_SESSION = 6;
 
-    //more constants copy pasted from Conversations
+    // more constants copy pasted from Conversations
     public static final int STATUS_RECEIVED = 0;
     public static final int STATUS_UNSEND = 1;
     public static final int STATUS_SEND = 2;
@@ -50,9 +50,17 @@ public class Message {
             final RtpSessionStatus rtpSessionStatus = RtpSessionStatus.of(body);
             if (rtpSessionStatus.successful) {
                 if (status == STATUS_RECEIVED) {
-                    return rtpSessionStatus.duration <= 0 ? "Incoming call" : String.format("Incoming call. Duration %d seconds", rtpSessionStatus.duration / 1000);
+                    return rtpSessionStatus.duration <= 0
+                            ? "Incoming call"
+                            : String.format(
+                                    "Incoming call. Duration %d seconds",
+                                    rtpSessionStatus.duration / 1000);
                 } else {
-                    return rtpSessionStatus.duration <= 0 ? "Outgoing call " : String.format("Outgoing call. Duration %d seconds", rtpSessionStatus.duration / 1000);
+                    return rtpSessionStatus.duration <= 0
+                            ? "Outgoing call "
+                            : String.format(
+                                    "Outgoing call. Duration %d seconds",
+                                    rtpSessionStatus.duration / 1000);
                 }
             } else {
                 return "Missed call";
