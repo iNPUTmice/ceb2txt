@@ -1,5 +1,6 @@
 package im.conversations.ceb2txt;
 
+import com.google.common.base.MoreObjects;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -9,27 +10,21 @@ public class BackupFileHeader {
 
     private static final int VERSION = 1;
 
-    private String app;
-    private Jid jid;
-    private long timestamp;
-    private byte[] iv;
-    private byte[] salt;
+    private final String app;
+    private final Jid jid;
+    private final long timestamp;
+    private final byte[] iv;
+    private final byte[] salt;
 
     @Override
     public String toString() {
-        return "BackupFileHeader{"
-                + "app='"
-                + app
-                + '\''
-                + ", jid="
-                + jid
-                + ", timestamp="
-                + timestamp
-                + ", iv="
-                + bytesToHex(iv)
-                + ", salt="
-                + bytesToHex(salt)
-                + '}';
+        return MoreObjects.toStringHelper(this)
+                .add("app", app)
+                .add("jid", jid)
+                .add("timestamp", timestamp)
+                .add("iv", iv)
+                .add("salt", salt)
+                .toString();
     }
 
     public BackupFileHeader(String app, Jid jid, long timestamp, byte[] iv, byte[] salt) {
