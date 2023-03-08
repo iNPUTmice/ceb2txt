@@ -32,7 +32,8 @@ public class Main {
             "create table accounts (uuid text primary key, username text, server text, password"
                     + " text, display_name text, status number, status_message text, rosterversion"
                     + " text, options number, avatar text, keys text, hostname text, port number,"
-                    + " resource text)";
+                    + " resource text, pinned_mechanism TEXT, pinned_channel_binding TEXT,"
+                    + " fast_mechanism TEXT, fast_token TEXT)";
     private static final String CREATE_CONVERSATIONS_TABLE =
             "create table conversations (uuid text, accountUuid text, name text, contactUuid text,"
                 + " contactJid text, created number, status number, mode number, attributes text)";
