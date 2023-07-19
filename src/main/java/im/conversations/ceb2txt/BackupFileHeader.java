@@ -4,7 +4,8 @@ import com.google.common.base.MoreObjects;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import rocks.xmpp.addr.Jid;
+import org.jxmpp.jid.Jid;
+import org.jxmpp.jid.impl.JidCreate;
 
 public class BackupFileHeader {
 
@@ -38,7 +39,7 @@ public class BackupFileHeader {
     public void write(DataOutputStream dataOutputStream) throws IOException {
         dataOutputStream.writeInt(VERSION);
         dataOutputStream.writeUTF(app);
-        dataOutputStream.writeUTF(jid.asBareJid().toEscapedString());
+        dataOutputStream.writeUTF(jid.asBareJid().toString());
         dataOutputStream.writeLong(timestamp);
         dataOutputStream.write(iv);
         dataOutputStream.write(salt);
@@ -61,7 +62,7 @@ public class BackupFileHeader {
         byte[] salt = new byte[16];
         inputStream.readFully(salt);
 
-        return new BackupFileHeader(app, Jid.of(jid), timestamp, iv, salt);
+        return new BackupFileHeader(app, JidCreate.fromOrThrowUnchecked(jid), timestamp, iv, salt);
     }
 
     public byte[] getSalt() {

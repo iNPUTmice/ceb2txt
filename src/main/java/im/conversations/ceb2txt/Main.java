@@ -20,6 +20,7 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 import org.conscrypt.Conscrypt;
+import org.jxmpp.stringprep.libidn.LibIdnXmppStringprep;
 import org.sql2o.Connection;
 import org.sql2o.Sql2o;
 
@@ -58,13 +59,15 @@ public class Main {
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
     private static final SimpleDateFormat TIME_FORMAT = new SimpleDateFormat("HH:mm");
 
-    public static void main(final String... args) throws Exception {
+    static {
+        LibIdnXmppStringprep.setup();
+    }
 
+    public static void main(final String... args) throws Exception {
         if (args.length != 1) {
             System.err.println("Usage java -jar im.conversations.ceb2txt-0.1.jar [filename]");
             System.exit(1);
         }
-
         final String cebFile = args[0];
         final File file = new File(cebFile);
 
@@ -178,14 +181,11 @@ public class Main {
                     }
                     File conversationFile =
                             new File(
-                                    account.getJid().asBareJid().toEscapedString()
+                                    account.getJid().asBareJid().toString()
                                             + "/"
                                             + (group ? "group" : "1on1")
                                             + "/"
-                                            + conversation
-                                                    .getContact()
-                                                    .asBareJid()
-                                                    .toEscapedString()
+                                            + conversation.getContact().asBareJid().toString()
                                             + "/"
                                             + currentDate
                                             + ".txt");
@@ -193,7 +193,7 @@ public class Main {
                     writer = new PrintWriter(conversationFile);
                 }
                 final String nick =
-                        group ? Strings.nullToEmpty(message.getCounterpart().getResource()) : "";
+                        group ? message.getCounterpart().getResourceOrEmpty().toString() : "";
                 writer.println(
                         TIME_FORMAT.format(date)
                                 + " "
@@ -221,7 +221,7 @@ public class Main {
         System.out.println(
                 conversationList.size()
                         + " conversations have been written to "
-                        + account.getJid().asBareJid().toEscapedString()
+                        + account.getJid().asBareJid().toString()
                         + "/*/*.txt");
     }
 

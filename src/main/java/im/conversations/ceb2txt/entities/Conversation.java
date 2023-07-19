@@ -1,6 +1,7 @@
 package im.conversations.ceb2txt.entities;
 
-import rocks.xmpp.addr.Jid;
+import org.jxmpp.jid.Jid;
+import org.jxmpp.jid.impl.JidCreate;
 
 public class Conversation {
 
@@ -13,7 +14,7 @@ public class Conversation {
     }
 
     public Jid getContact() {
-        return Jid.of(contactJid);
+        return JidCreate.fromOrThrowUnchecked(contactJid);
     }
 
     public boolean isGroupChat() {

@@ -1,6 +1,10 @@
 package im.conversations.ceb2txt.entities;
 
-import rocks.xmpp.addr.Jid;
+import org.jxmpp.jid.Jid;
+import org.jxmpp.jid.impl.JidCreate;
+import org.jxmpp.jid.parts.Domainpart;
+import org.jxmpp.jid.parts.Localpart;
+import org.jxmpp.jid.parts.Resourcepart;
 
 public class Account {
 
@@ -10,7 +14,10 @@ public class Account {
     private String uuid;
 
     public Jid getJid() {
-        return Jid.of(username, server, resource);
+        return JidCreate.entityFullFrom(
+                Localpart.fromOrNull(username),
+                Domainpart.fromOrThrowUnchecked(server),
+                Resourcepart.fromOrNull(resource));
     }
 
     public String getUuid() {

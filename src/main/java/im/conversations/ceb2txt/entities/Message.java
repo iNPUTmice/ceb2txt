@@ -1,7 +1,8 @@
 package im.conversations.ceb2txt.entities;
 
 import com.google.common.base.Strings;
-import rocks.xmpp.addr.Jid;
+import org.jxmpp.jid.Jid;
+import org.jxmpp.jid.impl.JidCreate;
 
 public class Message {
 
@@ -120,7 +121,7 @@ public class Message {
     }
 
     public Jid getCounterpart() {
-        return Jid.of(counterpart);
+        return JidCreate.fromOrNull(counterpart);
     }
 
     private static class FileParams {
