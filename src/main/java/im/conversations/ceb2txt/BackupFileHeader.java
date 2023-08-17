@@ -9,8 +9,9 @@ import org.jxmpp.jid.impl.JidCreate;
 
 public class BackupFileHeader {
 
-    private static final int VERSION = 1;
+    private static final int VERSION = 2;
 
+    private final int version;
     private final String app;
     private final Jid jid;
     private final long timestamp;
@@ -28,7 +29,9 @@ public class BackupFileHeader {
                 .toString();
     }
 
-    public BackupFileHeader(String app, Jid jid, long timestamp, byte[] iv, byte[] salt) {
+    public BackupFileHeader(
+            int version, String app, Jid jid, long timestamp, byte[] iv, byte[] salt) {
+        this.version = version;
         this.app = app;
         this.jid = jid;
         this.timestamp = timestamp;
@@ -62,7 +65,8 @@ public class BackupFileHeader {
         byte[] salt = new byte[16];
         inputStream.readFully(salt);
 
-        return new BackupFileHeader(app, JidCreate.fromOrThrowUnchecked(jid), timestamp, iv, salt);
+        return new BackupFileHeader(
+                version, app, JidCreate.fromOrThrowUnchecked(jid), timestamp, iv, salt);
     }
 
     public byte[] getSalt() {
@@ -95,5 +99,9 @@ public class BackupFileHeader {
             hexChars[j * 2 + 1] = hexArray[v & 0x0F];
         }
         return new String(hexChars);
+    }
+
+    public int getVersion() {
+        return this.version;
     }
 }

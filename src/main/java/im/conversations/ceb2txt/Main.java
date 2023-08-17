@@ -1,6 +1,8 @@
 package im.conversations.ceb2txt;
 
 import com.google.common.base.Strings;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
 import im.conversations.ceb2txt.entities.Account;
 import im.conversations.ceb2txt.entities.Conversation;
 import im.conversations.ceb2txt.entities.Message;
@@ -10,8 +12,8 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 import javax.crypto.Cipher;
 import javax.crypto.CipherInputStream;
@@ -22,9 +24,20 @@ import javax.crypto.spec.SecretKeySpec;
 import org.conscrypt.Conscrypt;
 import org.jxmpp.stringprep.libidn.LibIdnXmppStringprep;
 import org.sql2o.Connection;
+import org.sql2o.Query;
 import org.sql2o.Sql2o;
 
 public class Main {
+
+    private static final Collection<String> TABLE_ALLOW_LIST =
+            Arrays.asList(
+                    "accounts",
+                    "conversations",
+                    "messages",
+                    "prekeys",
+                    "signed_prekeys",
+                    "sessions",
+                    "identities");
 
     public static final String KEYTYPE = "AES";
     public static final String CIPHERMODE = "AES/GCM/NoPadding";
@@ -77,7 +90,7 @@ public class Main {
 
         try {
             backupFileHeader = BackupFileHeader.read(dataInputStream);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             System.err.println(file.getAbsolutePath() + " does not seem to be a valid backup file");
             System.exit(1);
             return;
@@ -116,8 +129,6 @@ public class Main {
             System.exit(1);
             return;
         }
-        String line;
-        StringBuilder multiLineQuery = null;
 
         final Sql2o database = new Sql2o("sqlite:", null, null);
 
@@ -130,22 +141,12 @@ public class Main {
         connection.createQuery(CREATE_SESSIONS_TABLE).executeUpdate();
         connection.createQuery(CREATE_IDENTITIES_TABLE).executeUpdate();
 
-        while ((line = reader.readLine()) != null) {
-            int count = count(line, '\'');
-            if (multiLineQuery != null) {
-                multiLineQuery.append('\n');
-                multiLineQuery.append(line);
-                if (count % 2 == 1) {
-                    connection.createQuery(multiLineQuery.toString()).executeUpdate();
-                    multiLineQuery = null;
-                }
-            } else {
-                if (count % 2 == 0) {
-                    connection.createQuery(line).executeUpdate();
-                } else {
-                    multiLineQuery = new StringBuilder(line);
-                }
-            }
+        if (backupFileHeader.getVersion() == 1) {
+            importV1Backup(connection, reader);
+        } else if (backupFileHeader.getVersion() == 2) {
+            importV2Backup(connection, reader);
+        } else {
+            throw new IllegalStateException("Unknown backup version");
         }
 
         final Account account =
@@ -223,6 +224,92 @@ public class Main {
                         + " conversations have been written to "
                         + account.getJid().asBareJid().toString()
                         + "/*/*.txt");
+    }
+
+    private static void importV1Backup(final Connection connection, final BufferedReader reader)
+            throws IOException {
+        String line;
+        StringBuilder multiLineQuery = null;
+        while ((line = reader.readLine()) != null) {
+            int count = count(line, '\'');
+            if (multiLineQuery != null) {
+                multiLineQuery.append('\n');
+                multiLineQuery.append(line);
+                if (count % 2 == 1) {
+                    connection.createQuery(multiLineQuery.toString()).executeUpdate();
+                    multiLineQuery = null;
+                }
+            } else {
+                if (count % 2 == 0) {
+                    connection.createQuery(line).executeUpdate();
+                } else {
+                    multiLineQuery = new StringBuilder(line);
+                }
+            }
+        }
+    }
+
+    private static void importV2Backup(final Connection connection, final BufferedReader reader)
+            throws IOException {
+        final JsonReader jsonReader = new JsonReader(reader);
+        if (jsonReader.peek() == JsonToken.BEGIN_ARRAY) {
+            jsonReader.beginArray();
+        } else {
+            throw new IllegalStateException("Backup file did not begin with array");
+        }
+        while (jsonReader.hasNext()) {
+            if (jsonReader.peek() == JsonToken.BEGIN_OBJECT) {
+                importRow(connection, jsonReader);
+            } else if (jsonReader.peek() == JsonToken.END_ARRAY) {
+                jsonReader.endArray();
+                continue;
+            }
+        }
+    }
+
+    private static void importRow(final Connection connection, final JsonReader jsonReader)
+            throws IOException {
+        jsonReader.beginObject();
+        final String firstParameter = jsonReader.nextName();
+        if (!firstParameter.equals("table")) {
+            throw new IllegalStateException("Expected key 'table'");
+        }
+        final String table = jsonReader.nextString();
+        if (!TABLE_ALLOW_LIST.contains(table)) {
+            throw new IOException(String.format("%s is not recognized for import", table));
+        }
+        final HashMap<String, Object> contentValues = new HashMap<>();
+        final String secondParameter = jsonReader.nextName();
+        if (!secondParameter.equals("values")) {
+            throw new IllegalStateException("Expected key 'values'");
+        }
+        jsonReader.beginObject();
+        while (jsonReader.peek() != JsonToken.END_OBJECT) {
+            final String name = jsonReader.nextName();
+            if (jsonReader.peek() == JsonToken.NULL) {
+                jsonReader.nextNull();
+                contentValues.put(name, null);
+            } else if (jsonReader.peek() == JsonToken.NUMBER) {
+                contentValues.put(name, jsonReader.nextLong());
+            } else {
+                contentValues.put(name, jsonReader.nextString());
+            }
+        }
+        jsonReader.endObject();
+        jsonReader.endObject();
+        final Query query =
+                connection.createQuery(
+                        String.format(
+                                "INSERT INTO %s (%s) VALUES (%s)",
+                                table,
+                                contentValues.keySet().stream().collect(Collectors.joining(", ")),
+                                contentValues.keySet().stream()
+                                        .map(k -> ":" + k)
+                                        .collect(Collectors.joining(", "))));
+        for (Map.Entry<String, Object> entry : contentValues.entrySet()) {
+            query.addParameter(entry.getKey(), entry.getValue());
+        }
+        query.executeUpdate();
     }
 
     public static byte[] getKey(final String password, final byte[] salt) {
