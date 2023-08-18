@@ -13,6 +13,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 import javax.crypto.Cipher;
@@ -38,6 +39,7 @@ public class Main {
                     "signed_prekeys",
                     "sessions",
                     "identities");
+    private static final Pattern COLUMN_PATTERN = Pattern.compile("^[a-zA-Z_]+$");
 
     public static final String KEYTYPE = "AES";
     public static final String CIPHERMODE = "AES/GCM/NoPadding";
@@ -286,13 +288,17 @@ public class Main {
         jsonReader.beginObject();
         while (jsonReader.peek() != JsonToken.END_OBJECT) {
             final String name = jsonReader.nextName();
-            if (jsonReader.peek() == JsonToken.NULL) {
-                jsonReader.nextNull();
-                contentValues.put(name, null);
-            } else if (jsonReader.peek() == JsonToken.NUMBER) {
-                contentValues.put(name, jsonReader.nextLong());
+            if (COLUMN_PATTERN.matcher(name).matches()) {
+                if (jsonReader.peek() == JsonToken.NULL) {
+                    jsonReader.nextNull();
+                    contentValues.put(name, null);
+                } else if (jsonReader.peek() == JsonToken.NUMBER) {
+                    contentValues.put(name, jsonReader.nextLong());
+                } else {
+                    contentValues.put(name, jsonReader.nextString());
+                }
             } else {
-                contentValues.put(name, jsonReader.nextString());
+                throw new IOException(String.format("Unexpected column name %s", name));
             }
         }
         jsonReader.endObject();
