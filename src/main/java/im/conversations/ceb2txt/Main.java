@@ -59,7 +59,7 @@ public class Main {
                 + " number, relativeFilePath text, serverMsgId text, axolotl_fingerprint text,"
                 + " carbon number, edited number, read number, oob number, errorMsg text,"
                 + " readByMarkers text, markable number, remoteMsgId text, deleted number,"
-                + " bodyLanguage text)";
+                + " bodyLanguage text, reactions text, occupantId number)";
     private static final String CREATE_PREKEYS_TABLE =
             "create table prekeys (account text, id text, key text)";
     private static final String CREATE_SIGNED_PREKEYS_TABLE =
